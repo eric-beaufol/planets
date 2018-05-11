@@ -18,7 +18,8 @@
     "dat.gui": "^0.7.2",
     "mouse-wheel": "^1.2.0",
     "stats.js": "^0.17.0",
-    "three.js": "^0.77.1",
+    "three": "^0.92.0",
+    "three-orbit-controls": "^82.1.0",
     "waves-audio": "^0.4.0"
   },
   "devDependencies": {
