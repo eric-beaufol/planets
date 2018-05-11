@@ -3,10 +3,10 @@ import EventEmitter from 'events';
 console.log(THREE.OrbitControls)
 
 class SolarSystem extends EventEmitter {
-  constructor() {
+  constructor(numPlanets) {
     super();
 
-    this.planetsLen = 2;
+    this.planetsLen = 1 + numPlanets;
     this.planets = [];
     this.gamma = .05;
     this.maxTrail = 500;
@@ -84,11 +84,11 @@ class SolarSystem extends EventEmitter {
     const objectGeometry = new THREE.SphereGeometry(radius,  i == 0 ? 50 : 10,  i == 0 ? 50 : 10);
     const objectMaterial = new THREE.MeshBasicMaterial({color: color});
 
+    const maxDistance = 200;
     const obj = new THREE.Mesh(objectGeometry, objectMaterial);
-    const distance = 800;
-    const posX = i === 0 ? 0 : (Math.random() * 2 - 1) * distance;
-    const posY = i === 0 ? 0 : (Math.random() * 2 - 1) * distance;
-    const posZ = i === 0 ? 0 : (Math.random() * 2 - 1) * distance;
+    const posX = i === 0 ? 0 : (Math.random() * 2 - 1) * maxDistance;
+    const posY = i === 0 ? 0 : (Math.random() * 2 - 1) * maxDistance;
+    const posZ = i === 0 ? 0 : (Math.random() * 2 - 1) * maxDistance;
 
     obj.position.set(posX, posY, posZ);
 

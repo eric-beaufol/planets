@@ -7,39 +7,54 @@ import * as audio from 'waves-audio';
 
 async function init() {
   const loader = new loaders.AudioBufferLoader();
-  const buffer = await loader.load('./assets/cherokee.wav');
+  const buffers = await loader.load([
+    './assets/cherokee.wav',
+    './assets/pierres.mp3',
+    './assets/sable.mp3',
+    ]);
 
   const $scene = document.querySelector('#scene');
+  const numPlanets = 2;
 
-  const system = new SolarSystem();
+  const system = new SolarSystem(numPlanets);
   system.init($scene);
 
-  const granularEngine = new audio.GranularEngine();
-  const position = buffer.duration * Math.random();
-  granularEngine.connect(audio.audioContext.destination);
-  granularEngine.buffer = buffer;
-  granularEngine.position = position;
-  granularEngine.positionVar = 0.01;
-  granularEngine.durationAbs = 0.1;
-  granularEngine.periodAbs = 0.02;
-  granularEngine.resampling = -600;
-
+  const engines = [];
   const scheduler = audio.getScheduler();
-  scheduler.add(granularEngine);
+
+  for (let i = 0; i < numPlanets; i++) {
+    const granularEngine = new audio.GranularEngine();
+    const buffer = buffers[Math.floor(Math.random() * buffers.length)];
+    const position = buffer.duration * Math.random();
+    granularEngine.connect(audio.audioContext.destination);
+    granularEngine.buffer = buffer;
+    granularEngine.position = position;
+    granularEngine.positionVar = 0.01;
+    granularEngine.durationAbs = 0.2;
+    granularEngine.periodAbs = 0.02;
+    granularEngine.periodVar = 0.005;
+    granularEngine.resampling = -600;
+
+    scheduler.add(granularEngine);
+    engines[i] = granularEngine;
+  }
 
   system.addListener('steers', steersStack => {
-    let value = steersStack[0];
-    value = value * 1e8; // [0, 100]
-    value = value / 100; // [0, 1]
-    value = Math.max(0, Math.min(1, value));
+    for (let i = 0; i < numPlanets; i++) {
+      let value = steersStack[i];
+      value = value * 1e8; // [0, 100]
+      value = value / 100; // [0, 1]
+      value = Math.max(0, Math.min(1, value));
 
-    const dist = Math.sqrt(1 - value)
-    const resampling = -1 * (600 * dist + 600);
-    const periodAbs = (0.15 - 0.02) * dist + 0.02; // 0.02, 0.15
+      const dist = Math.sqrt(1 - value)
+      const resampling = -1 * (600 * dist + 600);
+      // const periodAbs = (0.05 - 0.02) * dist + 0.02; // 0.02, 0.15
 
-    // console.log(resampling);
-    granularEngine.resampling = resampling;
-    granularEngine.periodAbs = periodAbs;
+      // console.log(resampling);
+      engines[i].resampling = resampling;
+      engines[i].gain = Math.sqrt(value);
+      // engines[i].periodAbs = periodAbs;
+    }
   });
 
   const gui = new dat.GUI({ height: 159 });
@@ -67,9 +82,9 @@ async function init() {
     system.showTrail = showTrail;
   });
 
-  gui.add({'position': position}, 'position').min(0).max(buffer.duration).step(.001).onChange(position => {
-    granularEngine.position = position;
-  });
+  // gui.add({'position': position}, 'position').min(0).max(buffer.duration).step(.001).onChange(position => {
+  //   granularEngine.position = position;
+  // });
 
   // Fill el
 
