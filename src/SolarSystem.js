@@ -1,21 +1,26 @@
 import * as THREE from 'three';
+import EventEmitter from 'events';
 console.log(THREE.OrbitControls)
 
-class SolarSystem {
+class SolarSystem extends EventEmitter {
   constructor() {
-    this.planetsLen = 10;
+    super();
+
+    this.planetsLen = 2;
     this.planets = [];
     this.gamma = .05;
     this.maxTrail = 500;
     this.showTrail = true;
 
     this.renderLoop = this.renderLoop.bind(this);
+
+    this.steersStack = [];
   }
 
   init($el) {
     this.scene = new THREE.Scene();
 
-    this.scene.fog = new THREE.Fog(0x000000, 0.015, 3000);
+    // this.scene.fog = new THREE.Fog(0x000000, 0.015, 3000);
 
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 6500000);
     const hyp = (window.innerWidth/2) / Math.sin(22.5 * (Math.PI/180));
@@ -73,16 +78,17 @@ class SolarSystem {
   createPlanet() {
     const i = this.planets.length;
 
-    const radius = i == 0 ? 20 : Math.random() * 2 + 2;
+    const radius = i == 0 ? 20 : Math.random() * 10 + 5;
     const color = i == 0 ? 0xffffff : Math.random() * 0xffffff;
 
     const objectGeometry = new THREE.SphereGeometry(radius,  i == 0 ? 50 : 10,  i == 0 ? 50 : 10);
     const objectMaterial = new THREE.MeshBasicMaterial({color: color});
 
     const obj = new THREE.Mesh(objectGeometry, objectMaterial);
-    const posX = i === 0 ? 0 : Math.random() * 1600 - 800;
-    const posY = i === 0 ? 0 : Math.random() * 1600 - 800;
-    const posZ = i === 0 ? 0 : Math.random() * 1600 - 800;
+    const distance = 800;
+    const posX = i === 0 ? 0 : (Math.random() * 2 - 1) * distance;
+    const posY = i === 0 ? 0 : (Math.random() * 2 - 1) * distance;
+    const posZ = i === 0 ? 0 : (Math.random() * 2 - 1) * distance;
 
     obj.position.set(posX, posY, posZ);
 
@@ -131,7 +137,7 @@ class SolarSystem {
       for (let ii = 0; ii < this.planets.length; ii++) {
         const otherObj = this.planets[ii];
 
-        if(otherObj !== currObj) {
+        if (otherObj !== currObj) {
 
           const massMultip = currObj.data.mass * otherObj.data.mass;
           const distance = Math.sqrt(
@@ -169,11 +175,23 @@ class SolarSystem {
         this.scene.add(line);
       }
 
-      //if(i === 1) console.log(line.geometry.vertices.length);
+      if (i > 0) {
+        const massMultip = currObj.data.mass * 3;
+        const distance = Math.sqrt(
+          Math.pow(currObj.position.x - this.camera.position.x, 2) +
+          Math.pow(currObj.position.y - this.camera.position.y, 2) +
+          Math.pow(currObj.position.z - this.camera.position.z, 2)
+        );
+
+        const gravitySteer = this.gamma * (massMultip / Math.pow(distance, 2));
+        this.steersStack[i - 1] = gravitySteer;
+      }
+
       currObj.data.line = line;
     }
 
     //console.log(this.universe.children.length);
+    this.emit('steers', this.steersStack);
 
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.renderLoop);

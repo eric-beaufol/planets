@@ -20,7 +20,8 @@
     "stats.js": "^0.17.0",
     "three": "^0.92.0",
     "three-orbit-controls": "^82.1.0",
-    "waves-audio": "^0.4.0"
+    "waves-audio": "^0.4.0",
+    "waves-loaders": "github:wavesjs/waves-loaders"
   },
   "devDependencies": {
     "babel-core": "^6.14.0",
