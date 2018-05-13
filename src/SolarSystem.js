@@ -1,26 +1,24 @@
 import * as THREE from 'three';
 import EventEmitter from 'events';
-console.log(THREE.OrbitControls)
 
 class SolarSystem extends EventEmitter {
   constructor(numPlanets) {
     super();
 
-    this.planetsLen = 1 + numPlanets;
     this.planets = [];
-    this.gamma = .05;
-    this.maxTrail = 500;
+    this.steersStack = [];
     this.showTrail = true;
+    this.planetsLen = 1 + numPlanets; // the star is the +1
+    this.gamma = .5;
+    this.maxTrail = 2500;
 
     this.renderLoop = this.renderLoop.bind(this);
-
-    this.steersStack = [];
   }
 
-  init($el) {
+  init(el) {
     this.scene = new THREE.Scene();
 
-    // this.scene.fog = new THREE.Fog(0x000000, 0.015, 3000);
+    this.scene.fog = new THREE.Fog(0x000000, 0.015, 30000);
 
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 6500000);
     const hyp = (window.innerWidth/2) / Math.sin(22.5 * (Math.PI/180));
@@ -35,17 +33,21 @@ class SolarSystem extends EventEmitter {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setClearColor(new THREE.Color(0x000000));
 
-
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are
     this.controls.dampingFactor = 0.25;
+    // this.controls.autoRotate = true;
+    this.controls.autoRotateSpeed = 0.05;
 
-    this.controls.screenSpacePanning = false;
+    var boxHelper = this.createBoxGrid(10000, -5000, 10, 0x333333);
+    this.scene.add(boxHelper);
+
+    // this.controls.screenSpacePanning = false;
 
     this.controls.minDistance = 100;
     this.controls.maxDistance = 50000;
 
-    this.controls.maxPolarAngle = Math.PI / 2;
+    // this.controls.maxPolarAngle = Math.PI / 2;
 
     this.planets = [];
 
@@ -55,13 +57,13 @@ class SolarSystem extends EventEmitter {
 
     // this.scene.add(this.universe);
 
-    const axesHelper = new THREE.AxesHelper( 5 );
+    const axesHelper = new THREE.AxesHelper(5);
     this.scene.add(axesHelper);
 
     // var ambientLight = new THREE.AmbientLight(0xffffff);
     // this.scene.add(ambientLight);
 
-    $el.appendChild(this.renderer.domElement);
+    el.appendChild(this.renderer.domElement);
 
     this.renderLoop();
   }
@@ -84,7 +86,7 @@ class SolarSystem extends EventEmitter {
     const objectGeometry = new THREE.SphereGeometry(radius,  i == 0 ? 50 : 10,  i == 0 ? 50 : 10);
     const objectMaterial = new THREE.MeshBasicMaterial({color: color});
 
-    const maxDistance = 200;
+    const maxDistance = 1000;
     const obj = new THREE.Mesh(objectGeometry, objectMaterial);
     const posX = i === 0 ? 0 : (Math.random() * 2 - 1) * maxDistance;
     const posY = i === 0 ? 0 : (Math.random() * 2 - 1) * maxDistance;
@@ -176,15 +178,17 @@ class SolarSystem extends EventEmitter {
       }
 
       if (i > 0) {
-        const massMultip = currObj.data.mass * 3;
+        const star = this.planets[0];
+        const massMultip = currObj.data.mass * star.data.mass;
         const distance = Math.sqrt(
-          Math.pow(currObj.position.x - this.camera.position.x, 2) +
-          Math.pow(currObj.position.y - this.camera.position.y, 2) +
-          Math.pow(currObj.position.z - this.camera.position.z, 2)
+          Math.pow(currObj.position.x - star.position.x, 2) +
+          Math.pow(currObj.position.y - star.position.y, 2) +
+          Math.pow(currObj.position.z - star.position.z, 2)
         );
 
         const gravitySteer = this.gamma * (massMultip / Math.pow(distance, 2));
-        this.steersStack[i - 1] = gravitySteer;
+        this.steersStack[i - 1] = gravitySteer / currObj.data.mass;
+        // console.log(gravitySteer);
       }
 
       currObj.data.line = line;
@@ -195,6 +199,34 @@ class SolarSystem extends EventEmitter {
 
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.renderLoop);
+  }
+
+  createBoxGrid(size, translateY, divisions, color) {
+    const boxGrid = new THREE.Group();
+    boxGrid.name = "BoxGrid";
+
+    const box3 = new THREE.Box3(new THREE.Vector3(-size / 2, 0, -size / 2), new THREE.Vector3(size / 2, size, size / 2));
+    const box3Helper = new THREE.Box3Helper(box3, color);
+
+    for (let i = 0; i <= divisions; i++) {
+      const gridHelper = new THREE.GridHelper(size, divisions, color, color);
+      gridHelper.translateY(i * (size / divisions));
+      boxGrid.add(gridHelper);
+    }
+
+    for (let i = 0; i <= divisions; i++) {
+      const gridHelper = new THREE.GridHelper(size, divisions, color, color);
+      gridHelper.translateX(i * (size / divisions) - size / 2);
+      gridHelper.translateY(size / 2);
+
+      gridHelper.rotation.z = Math.PI / 2;
+      boxGrid.add(gridHelper);
+    }
+    
+    boxGrid.add(box3Helper);
+    boxGrid.translateY(translateY);
+
+    return boxGrid;
   }
 }
 
