@@ -119,7 +119,7 @@ async function init() {
     system.planetsLen = newPlanetsLen;
   });
 
-  gui.add({'maxTrail': 2500}, 'maxTrail').min(10).max(10000).step(1).onChange(newMaxTrail => {
+  gui.add({'maxTrail': 1500}, 'maxTrail').min(10).max(10000).step(1).onChange(newMaxTrail => {
     system.maxTrail = newMaxTrail;
   });
 
@@ -130,21 +130,27 @@ async function init() {
   gui.add({'durationAbs': false}, 'durationAbs').onChange(isDurationAbs => {
     durationAbs = isDurationAbs;
     if (!isDurationAbs) {
-      granularEngine.durationAbs = 0.2;
+      for (let i = 0; i < numPlanets; i++) {
+        engines[i].durationAbs = 0.2;
+      }
     }
   });
 
   gui.add({'periodVar': false}, 'periodVar').onChange(isPeriodVar => {
     periodVar = isPeriodVar;
     if (!isPeriodVar) {
-      granularEngine.periodVar = 0.005;
+      for (let i = 0; i < numPlanets; i++) {
+        engines[i].periodVar = 0.005;
+      }
     }
   });
 
   gui.add({'positionVar': false}, 'positionVar').onChange(isPositionVar => {
     positionVar = isPositionVar;
     if (!isPositionVar) {
-      granularEngine.positionVar = 0.01;
+      for (let i = 0; i < numPlanets; i++) {
+        engines[i].positionVar = 0.01;
+      }
     }
   });
 

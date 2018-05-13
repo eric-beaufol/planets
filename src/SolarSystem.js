@@ -10,7 +10,7 @@ class SolarSystem extends EventEmitter {
     this.showTrail = true;
     this.planetsLen = 1 + numPlanets; // the star is the +1
     this.gamma = .5;
-    this.maxTrail = 2500;
+    this.maxTrail = 1500;
 
     this.renderLoop = this.renderLoop.bind(this);
   }
@@ -27,7 +27,7 @@ class SolarSystem extends EventEmitter {
     this.camZ = height * (window.innerHeight / window.innerWidth);
 
     this.camera.position.z = this.camZ + 500;
-    this.camera.position.y = 0;
+    this.camera.position.y = 200;
 
     this.renderer = new THREE.WebGLRenderer({antialias: !0});
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -36,8 +36,8 @@ class SolarSystem extends EventEmitter {
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are
     this.controls.dampingFactor = 0.25;
-    // this.controls.autoRotate = true;
-    this.controls.autoRotateSpeed = 0.05;
+    this.controls.autoRotate = true;
+    this.controls.autoRotateSpeed = -0.008;
 
     var boxHelper = this.createBoxGrid(10000, -5000, 10, 0x333333);
     this.scene.add(boxHelper);
